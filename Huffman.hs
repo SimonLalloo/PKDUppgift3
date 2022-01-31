@@ -3,7 +3,7 @@
 module Huffman(HuffmanTree, characterCounts, huffmanTree, codeTable, encode, compress, decompress) where
 
 import Table
-import qualified PriorityQueue
+import PriorityQueue
 
 import Test.HUnit
 import Debug.Trace
@@ -28,12 +28,12 @@ characterCounts = characterCounts' Table.empty
 
 characterCounts' :: Table Char Int -> String -> Table Char Int
 characterCounts' t [] = t
-characterCounts' t (x:xs) = 
+characterCounts' t (x:xs) =
     if exists t x
         then
             let Just v = Table.lookup t x
-            in characterCounts' (insert t x (v+1)) xs
-        else characterCounts' (insert t x 1) xs
+            in characterCounts' (Table.insert t x (v+1)) xs
+        else characterCounts' (Table.insert t x 1) xs
 
 
 
@@ -43,21 +43,51 @@ data HuffmanTree = HuffmanTree HuffmanTree Int HuffmanTree
                 deriving Show
 
 
+
 {- huffmanTree t
-   PRE:  t maps each key to a positive value
+   PRE: t maps each key to a positive value
+        t is not empty
    RETURNS: a Huffman tree based on the character counts in t
    EXAMPLES:
  -}
 huffmanTree :: Table Char Int -> HuffmanTree
-huffmanTree = undefined
+huffmanTree t =
+    let
+        queue = Table.iterate t (\q (a,b) -> PriorityQueue.insert q ( Leaf a b, b)) PriorityQueue.empty
+    in
+        huffmanTree' queue
+
+huffmanTree' :: PriorityQueue HuffmanTree -> HuffmanTree
+huffmanTree' q =
+    let
+        ((a1,b1),xs) = PriorityQueue.least q
+    in
+        if not (PriorityQueue.is_empty xs)
+            then
+                let
+                    ((a2,b2),ys) = PriorityQueue.least xs
+                in
+                    huffmanTree' (PriorityQueue.insert ys (HuffmanTree a1 (b1+b2) a2, b1+b2))
+            else
+                a1
+
 
 
 {- codeTable h
+   PRE: h = (HuffmanTree h1 _ h2)
    RETURNS: a table that maps each character in h to its Huffman code
    EXAMPLES:
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
-codeTable = undefined
+codeTable h = codeTable' h []
+
+codeTable' :: HuffmanTree -> BitCode -> Table Char BitCode
+codeTable' (Leaf x _) code = Table.insert Table.empty x code
+codeTable' (HuffmanTree h1 _ h2) code = update (codeTable' h1 (code ++ [False])) (codeTable' h2 (code ++ [True]))
+
+update :: Table Char BitCode -> Table Char BitCode -> Table Char BitCode
+update t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
+
 
 
 {- encode h s

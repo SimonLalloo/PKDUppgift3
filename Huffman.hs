@@ -27,7 +27,9 @@ characterCounts = undefined
 
 
 -- modify and add comments as needed
-data HuffmanTree = HuffmanTree ()
+data HuffmanTree = HuffmanTree HuffmanTree Int HuffmanTree
+                | Leaf Char Int
+                deriving Show
 
 
 {- huffmanTree t

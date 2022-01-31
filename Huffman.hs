@@ -3,9 +3,10 @@
 module Huffman(HuffmanTree, characterCounts, huffmanTree, codeTable, encode, compress, decompress) where
 
 import Table
-import PriorityQueue
+import qualified PriorityQueue
 
 import Test.HUnit
+import Debug.Trace
 
 {- a bit code (of a character or string) is represented by a list of Booleans
    INVARIANT:
@@ -23,7 +24,17 @@ type BitCode = [Bool]
    EXAMPLES:
  -}
 characterCounts :: String -> Table Char Int
-characterCounts = undefined
+characterCounts = characterCounts' Table.empty
+
+characterCounts' :: Table Char Int -> String -> Table Char Int
+characterCounts' t [] = t
+characterCounts' t (x:xs) = 
+    if exists t x
+        then
+            let Just v = Table.lookup t x
+            in characterCounts' (insert t x (v+1)) xs
+        else characterCounts' (insert t x 1) xs
+
 
 
 -- modify and add comments as needed
@@ -56,6 +67,7 @@ codeTable = undefined
  -}
 encode :: HuffmanTree -> String -> BitCode
 encode = undefined
+
 
 {- compress s
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)

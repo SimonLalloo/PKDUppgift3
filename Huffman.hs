@@ -18,15 +18,26 @@ type BitCode = [Bool]
 
 --------------------------------------------------------------------------------
 
-{- characterCounts s
-   RETURNS: a table that maps each character that occurs in s to the number of
-         times the character occurs in s
-   EXAMPLES:
+{-  characterCounts s
+    Counts the occurences of each character in a string.
+    RETURNS: a table that maps each character that occurs in s to the number of
+         times the character occurs in s.
+    EXAMPLES:
+        characterCounts "test" == T [('t',2),('e',1),('s',1)]
+        characterCounts "" == T []
  -}
 characterCounts :: String -> Table Char Int
 characterCounts = characterCounts' Table.empty
 
+{-  characterCounts' t s
+    Counts the occurences of each character in a string.
+    RETURNS: Each character and the number of its occurences in s, inserted into t.
+    EXAMPLES: 
+        characterCounts' Table.empty "test" == T [('t',2),('e',1),('s',1)]
+        characterCounts' (Table.insert Table.empty 'a' 5) "test" == T [('a',5),('t',2),('e',1),('s',1)]
+-}
 characterCounts' :: Table Char Int -> String -> Table Char Int
+-- VARIANT: length (x:xs)
 characterCounts' t [] = t
 characterCounts' t (x:xs) =
     if exists t x
@@ -37,18 +48,23 @@ characterCounts' t (x:xs) =
 
 
 
--- modify and add comments as needed
+{-  HuffmanTree
+    A Huffman tree
+
+    INVARIANT:
+-}
 data HuffmanTree = HuffmanTree HuffmanTree Int HuffmanTree
                 | Leaf Char Int
                 deriving Show
 
 
 
-{- huffmanTree t
-   PRE: t maps each key to a positive value
-        t is not empty
-   RETURNS: a Huffman tree based on the character counts in t
-   EXAMPLES:
+{-  huffmanTree t
+    Makes a huffman tree from a table of characters and their counts.
+    PRE: t maps each key to a positive value && t is not empty
+    RETURNS: a Huffman tree based on the character counts in t
+    EXAMPLES: 
+        huffmanTree (characterCounts "test") == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
  -}
 huffmanTree :: Table Char Int -> HuffmanTree
 huffmanTree t =
@@ -57,7 +73,16 @@ huffmanTree t =
     in
         huffmanTree' queue
 
+{-  huffmanTree' q
+    Makes a huffman tree from a queue of characters and their counts.
+    PRE: PriorityQueue.is_empty q == False
+    RETURNS: a Huffman tree based on the character counts in q
+    EXAMPLES: 
+        huffmanTree' (BinoHeap [Node 0 1 (Leaf 's' 1) [],Node 1 1 (Leaf 'e' 1) [Node 0 2 (Leaf 't' 2) []]])
+        == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
+-}
 huffmanTree' :: PriorityQueue HuffmanTree -> HuffmanTree
+-- VARIANT: The length of q
 huffmanTree' q =
     let
         ((a1,b1),xs) = PriorityQueue.least q
@@ -73,20 +98,44 @@ huffmanTree' q =
 
 
 
-{- codeTable h
-   PRE: h = (HuffmanTree h1 _ h2)
-   RETURNS: a table that maps each character in h to its Huffman code
-   EXAMPLES:
+{-  codeTable h
+    Turns a huffman tree into a code table
+    RETURNS: a table that maps each character in h to its Huffman code
+    EXAMPLES:
+        codeTable (Leaf 'a' 5) == T [('a',[])]
+        codeTable (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1)))
+        == T [('s',[True,True]),('e',[True,False]),('t',[False])]
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable h = codeTable' h []
 
+{-  codeTable' h b
+    Makes a code table
+    RETURNS: a table that maps each character in h to its Huffman code
+    EXAMPLES:
+        codeTable' (Leaf 'a' 5) [] == T [('a',[])]
+        codeTable' (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) []
+        == T [('s',[True,True]),('e',[True,False]),('t',[False])]
+        codeTable' (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) [True, False]
+        == T [('s',[True,False,True,True]),('e',[True,False,True,False]),('t',[True,False,False])]
+-}
 codeTable' :: HuffmanTree -> BitCode -> Table Char BitCode
+-- VARIANT: The amount of nodes in the tree
 codeTable' (Leaf x _) code = Table.insert Table.empty x code
-codeTable' (HuffmanTree h1 _ h2) code = update (codeTable' h1 (code ++ [False])) (codeTable' h2 (code ++ [True]))
+codeTable' (HuffmanTree h1 _ h2) code = combine (codeTable' h1 (code ++ [False])) (codeTable' h2 (code ++ [True]))
 
-update :: Table Char BitCode -> Table Char BitCode -> Table Char BitCode
-update t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
+{-  combine t1 t2
+    Combines two tables.
+    RETURNS: All key-value pairs from t1 inserted into t2, with the value from t1 if the key exists
+    in both.
+    EXAMPLES:
+        combine a b == T [('a',[True]),('d',[True,True]),('c',[True,True,False]),('b',[True,True])]
+        where
+            a = (Table.insert (Table.insert (Table.insert (Table.empty) 'a' [True]) 'b' [True,True]) 'c' [True,True,False]);
+            b = (Table.insert (Table.insert (Table.insert (Table.empty) 'a' [True]) 'd' [True,True]) 'c' [False,True,False])
+-}
+combine :: Table Char BitCode -> Table Char BitCode -> Table Char BitCode
+combine t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
 
 
 

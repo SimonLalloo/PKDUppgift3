@@ -193,6 +193,7 @@ decompress h bits =
 
 {- decompress' h c n
    Decompress the first character from a bitcode using its huffman tree
+   PRE: h is not Void
    RETURNS: (The first character decoded from c using h, n as the amount of c that was used)
    EXAMPLES: 
    decompress' (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) [False,True,False,True,True,False] 0 == ('t',1)

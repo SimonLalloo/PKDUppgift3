@@ -93,18 +93,20 @@ update t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
 {- encode h s
    PRE: All characters in s appear in h
    RETURNS: the concatenation of the characters of s encoded using the Huffman code table of h.
-   EXAMPLES:
+   EXAMPLES: 
  -}
 encode :: HuffmanTree -> String -> BitCode
-encode = undefined
+encode h [] = []
+encode h (s:ss) = encodeAux (Table.lookup (codeTable h) s) ++ encode h ss
+encodeAux (Just n) = n
 
-
+tree = huffmanTree (characterCounts "hej jag heter simon.")
 {- compress s
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)
    EXAMPLES:
  -}
 compress :: String -> (HuffmanTree, BitCode)
-compress = undefined
+compress s = (huffmanTree (characterCounts s), encode (huffmanTree (characterCounts s))s )
 
 
 {- decompress h bits
@@ -114,7 +116,21 @@ compress = undefined
  -}
 decompress :: HuffmanTree -> BitCode -> String
 decompress = undefined
+decompress h [] = []
+decompress h bits = find h bits 
 
+-- False - vänster dvs h1 _ h2 gå till h1
+-- True - höger dvs h2
+
+find :: HuffmanTree -> BitCode -> String
+find h [] = []
+find (Leaf x  _) b = x ++ find (h1 n h2) b
+findCharacter (HuffmanTree h1 n h2) (b:bs)
+              | b = find h2 bs 
+              | otherwise = find h1 bs 
+
+
+--let (h, bits) = compress s in decompress h bits
 
 --------------------------------------------------------------------------------
 -- Test Cases

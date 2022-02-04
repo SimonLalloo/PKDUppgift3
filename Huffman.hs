@@ -18,6 +18,8 @@ type BitCode = [Bool]
 -- END OF DO NOT MODIFY ZONE
 
 --------------------------------------------------------------------------------
+-- Simon Lalloo & Matilda Sundberg
+
 
 {-  characterCounts s
     Counts the occurences of each character in a string.
@@ -51,18 +53,19 @@ characterCounts' t (x:xs) =
 
 {-  HuffmanTree
     A Huffman tree
-
-    INVARIANT:
+    A binary tree consisting of subtrees or leaves
+    INVARIANT: The int is equal to the sum of the ints of each nodes children. Void is the empty tree.
 -}
 data HuffmanTree = HuffmanTree HuffmanTree Int HuffmanTree
                 | Leaf Char Int
+                | Void
                 deriving Show
 
 
 
 {-  huffmanTree t
     Makes a huffman tree from a table of characters and their counts.
-    PRE: t maps each key to a positive value && t is not empty
+    PRE: t maps each key to a positive value
     RETURNS: a Huffman tree based on the character counts in t
     EXAMPLES: 
         huffmanTree (characterCounts "test") == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
@@ -76,7 +79,6 @@ huffmanTree t =
 
 {-  huffmanTree' q
     Makes a huffman tree from a queue of characters and their counts.
-    PRE: PriorityQueue.is_empty q == False
     RETURNS: a Huffman tree based on the character counts in q
     EXAMPLES: 
         huffmanTree' (BinoHeap [Node 0 1 (Leaf 's' 1) [],Node 1 1 (Leaf 'e' 1) [Node 0 2 (Leaf 't' 2) []]])
@@ -84,24 +86,25 @@ huffmanTree t =
 -}
 huffmanTree' :: PriorityQueue HuffmanTree -> HuffmanTree
 -- VARIANT: The length of q
-huffmanTree' q =
-    let
-        ((a1,b1),xs) = PriorityQueue.least q
-    in
-        if not (PriorityQueue.is_empty xs)
-            then
-                let
-                    ((a2,b2),ys) = PriorityQueue.least xs
-                in
-                    huffmanTree' (PriorityQueue.insert ys (HuffmanTree a1 (b1+b2) a2, b1+b2))
-            else
-                a1
+huffmanTree' q
+    | PriorityQueue.is_empty q = Void
+    | otherwise =
+        let
+            ((a1,b1),xs) = PriorityQueue.least q
+        in
+            if not (PriorityQueue.is_empty xs)
+                then
+                    let
+                        ((a2,b2),ys) = PriorityQueue.least xs
+                    in
+                        huffmanTree' (PriorityQueue.insert ys (HuffmanTree a1 (b1+b2) a2, b1+b2))
+                else
+                    a1
 
 
 
 {-  codeTable h
     Turns a huffman tree into a code table
-    PRE:
     RETURNS: a table that maps each character in h to its Huffman code
     EXAMPLES:
         codeTable (Leaf 'a' 5) == T [('a',[])]
@@ -143,11 +146,15 @@ combine t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
 
 
 {- encode h s
+   Encodes a string using a huffman tree
    PRE: All characters in s appear in h
    RETURNS: the concatenation of the characters of s encoded using the Huffman code table of h.
    EXAMPLES: 
+    encode (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) "test" == [False,True,False,True,True,False]
+    encode (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) "set" == [True,True,True,False,False]
  -}
 encode :: HuffmanTree -> String -> BitCode
+-- VARIANT: length of s
 encode h [] = []
 encode h (s:ss) = (\(Just n) -> n) (Table.lookup (codeTable h) s) ++ encode h ss
 
@@ -155,10 +162,14 @@ encode h (s:ss) = (\(Just n) -> n) (Table.lookup (codeTable h) s) ++ encode h ss
 
 tree = huffmanTree (characterCounts "hej jag heter simon.")
 {- compress s
+   Compresses a string to a bitcode and its huffman tree
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)
    EXAMPLES:
+   compress "test" == (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1)),[False,True,False,True,True,False])
+   compress "ttt" == (Leaf 't' 3,[True,True,True])
  -}
 compress :: String -> (HuffmanTree, BitCode)
+compress [] = (Void, [])
 compress s =
     let h = huffmanTree $ characterCounts s
     in (h, encode h s) 
@@ -166,17 +177,29 @@ compress s =
 
 
 {- decompress h bits
+   Decompress a bitcode using its huffman tree
    PRE:  bits is a concatenation of valid Huffman code words for h
    RETURNS: the decoding of bits under h
    EXAMPLES:
+   decompress (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) [False,True,False,True,True,False] == "test"
+   decompress (Leaf 't' 3) [True,True,True] == "ttt"
  -}
 decompress :: HuffmanTree -> BitCode -> String
+-- VARIANT: length bits
 decompress h [] = ""
-decompress h code = 
-    let (x,n) = decompress' h code 0
-    in x : decompress h (drop n code)
+decompress h bits = 
+    let (x,n) = decompress' h bits 0
+    in x : decompress h (drop n bits)
 
+{- decompress' h c n
+   Decompress the first character from a bitcode using its huffman tree
+   RETURNS: (The first character decoded from c using h, n as the amount of c that was used)
+   EXAMPLES: 
+   decompress' (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) [False,True,False,True,True,False] 0 == ('t',1)
+   decompress' (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) [False,True,False,True,True,False] 5 == ('t',6)
+-}
 decompress' :: HuffmanTree -> BitCode -> Int -> (Char, Int)
+-- VARIANT: the height of h
 decompress' (Leaf x _) _ n = 
     if n /= 0
         then (x,n)
@@ -186,8 +209,6 @@ decompress' (HuffmanTree h1 _ h2) (x:xs) n
     |otherwise = decompress' h1 xs (n+1)
     
 
-
---let (h, bits) = compress s in decompress h bits
 
 --------------------------------------------------------------------------------
 -- Test Cases

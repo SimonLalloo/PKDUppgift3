@@ -165,7 +165,6 @@ encode h (s:ss) = (\(Just n) -> n) (Table.lookup (codeTable h) s) ++ encode h ss
 
 
 
-tree = huffmanTree (characterCounts "hej jag heter simon.")
 {- compress s
    Compresses a string to a bitcode and its huffman tree
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)

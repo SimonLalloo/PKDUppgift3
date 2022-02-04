@@ -145,7 +145,7 @@ combine t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
 {- encode h s
    PRE: All characters in s appear in h
    RETURNS: the concatenation of the characters of s encoded using the Huffman code table of h.
-   EXAMPLES:
+   EXAMPLES: 
  -}
 encode :: HuffmanTree -> String -> BitCode
 encode h [] = []
@@ -153,6 +153,7 @@ encode h (s:ss) = (\(Just n) -> n) (Table.lookup (codeTable h) s) ++ encode h ss
 
 
 
+tree = huffmanTree (characterCounts "hej jag heter simon.")
 {- compress s
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)
    EXAMPLES:
@@ -161,6 +162,7 @@ compress :: String -> (HuffmanTree, BitCode)
 compress s =
     let h = huffmanTree $ characterCounts s
     in (h, encode h s) 
+
 
 
 {- decompress h bits
@@ -183,8 +185,9 @@ decompress' (HuffmanTree h1 _ h2) (x:xs) n
     | x = decompress' h2 xs (n+1)
     |otherwise = decompress' h1 xs (n+1)
     
-tree = huffmanTree $ characterCounts "hej jag heter simon."
 
+
+--let (h, bits) = compress s in decompress h bits
 
 --------------------------------------------------------------------------------
 -- Test Cases

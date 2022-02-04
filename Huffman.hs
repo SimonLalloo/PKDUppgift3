@@ -69,6 +69,7 @@ data HuffmanTree = HuffmanTree HuffmanTree Int HuffmanTree
     RETURNS: a Huffman tree based on the character counts in t
     EXAMPLES: 
         huffmanTree (characterCounts "test") == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
+        huffmanTree $ characterCounts "" == Void
  -}
 huffmanTree :: Table Char Int -> HuffmanTree
 huffmanTree t =
@@ -83,6 +84,7 @@ huffmanTree t =
     EXAMPLES: 
         huffmanTree' (BinoHeap [Node 0 1 (Leaf 's' 1) [],Node 1 1 (Leaf 'e' 1) [Node 0 2 (Leaf 't' 2) []]])
         == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
+        huffmanTree' PriorityQueue.empty == Void
 -}
 huffmanTree' :: PriorityQueue HuffmanTree -> HuffmanTree
 -- VARIANT: The length of q
@@ -105,6 +107,7 @@ huffmanTree' q
 
 {-  codeTable h
     Turns a huffman tree into a code table
+    PRE: h is not Void
     RETURNS: a table that maps each character in h to its Huffman code
     EXAMPLES:
         codeTable (Leaf 'a' 5) == T [('a',[])]
@@ -117,6 +120,7 @@ codeTable h = codeTable' h []
 
 {-  codeTable' h b
     Makes a code table
+    PRE: h is not void
     RETURNS: a table that maps each character in h to its Huffman code
     EXAMPLES:
         codeTable' (Leaf 'a' 5) [] == T [('a',[])]
@@ -152,6 +156,7 @@ combine t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
    EXAMPLES: 
     encode (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) "test" == [False,True,False,True,True,False]
     encode (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) "set" == [True,True,True,False,False]
+    encode Void "" == []
  -}
 encode :: HuffmanTree -> String -> BitCode
 -- VARIANT: length of s
@@ -167,6 +172,7 @@ tree = huffmanTree (characterCounts "hej jag heter simon.")
    EXAMPLES:
    compress "test" == (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1)),[False,True,False,True,True,False])
    compress "ttt" == (Leaf 't' 3,[True,True,True])
+   compress "" == (Void,[])
  -}
 compress :: String -> (HuffmanTree, BitCode)
 compress [] = (Void, [])
@@ -178,11 +184,12 @@ compress s =
 
 {- decompress h bits
    Decompress a bitcode using its huffman tree
-   PRE:  bits is a concatenation of valid Huffman code words for h
+   PRE: bits is a concatenation of valid Huffman code words for h
    RETURNS: the decoding of bits under h
    EXAMPLES:
    decompress (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))) [False,True,False,True,True,False] == "test"
    decompress (Leaf 't' 3) [True,True,True] == "ttt"
+   decompress Void [] == ""
  -}
 decompress :: HuffmanTree -> BitCode -> String
 -- VARIANT: length bits

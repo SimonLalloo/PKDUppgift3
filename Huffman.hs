@@ -1,4 +1,5 @@
 -- DO NOT MODIFY THE FOLLOWING LINES
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Huffman(HuffmanTree, characterCounts, huffmanTree, codeTable, encode, compress, decompress) where
 
@@ -100,6 +101,7 @@ huffmanTree' q =
 
 {-  codeTable h
     Turns a huffman tree into a code table
+    PRE:
     RETURNS: a table that maps each character in h to its Huffman code
     EXAMPLES:
         codeTable (Leaf 'a' 5) == T [('a',[])]
@@ -107,6 +109,7 @@ huffmanTree' q =
         == T [('s',[True,True]),('e',[True,False]),('t',[False])]
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
+codeTable (Leaf x _) = Table.insert Table.empty x [True]
 codeTable h = codeTable' h []
 
 {-  codeTable' h b
@@ -145,7 +148,9 @@ combine t1 = Table.iterate t1 (\t (a,b) -> Table.insert t a b)
    EXAMPLES:
  -}
 encode :: HuffmanTree -> String -> BitCode
-encode = undefined
+encode h [] = []
+encode h (s:ss) = (\(Just n) -> n) (Table.lookup (codeTable h) s) ++ encode h ss
+
 
 
 {- compress s
@@ -153,7 +158,9 @@ encode = undefined
    EXAMPLES:
  -}
 compress :: String -> (HuffmanTree, BitCode)
-compress = undefined
+compress s =
+    let h = huffmanTree $ characterCounts s
+    in (h, encode h s) 
 
 
 {- decompress h bits
@@ -162,7 +169,21 @@ compress = undefined
    EXAMPLES:
  -}
 decompress :: HuffmanTree -> BitCode -> String
-decompress = undefined
+decompress h [] = ""
+decompress h code = 
+    let (x,n) = decompress' h code 0
+    in x : decompress h (drop n code)
+
+decompress' :: HuffmanTree -> BitCode -> Int -> (Char, Int)
+decompress' (Leaf x _) _ n = 
+    if n /= 0
+        then (x,n)
+        else (x,1)
+decompress' (HuffmanTree h1 _ h2) (x:xs) n
+    | x = decompress' h2 xs (n+1)
+    |otherwise = decompress' h1 xs (n+1)
+    
+tree = huffmanTree $ characterCounts "hej jag heter simon."
 
 
 --------------------------------------------------------------------------------

@@ -105,7 +105,6 @@ huffmanTree' q
 
 {-  codeTable h
     Turns a huffman tree into a code table
-    PRE: h is not Void
     RETURNS: a table that maps each character in h to its Huffman code
     EXAMPLES:
         codeTable (Leaf 'a' 5) == T [('a',[])]
@@ -113,6 +112,7 @@ huffmanTree' q
         == T [('s',[True,True]),('e',[True,False]),('t',[False])]
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
+codeTable Void = Table.empty 
 codeTable (Leaf x _) = Table.insert Table.empty x [True]
 codeTable h = codeTable' h []
 

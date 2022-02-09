@@ -52,7 +52,7 @@ characterCounts' t (x:xs) =
 
 {-  HuffmanTree
     A Huffman tree
-    A binary tree consisting of subtrees or leaves
+    A full binary tree consisting of subtrees or leaves
     INVARIANT: The int is equal to the sum of the ints of each nodes children. Void is the empty tree.
 -}
 data HuffmanTree = HuffmanTree HuffmanTree Int HuffmanTree
@@ -81,12 +81,12 @@ huffmanTree t =
     Makes a huffman tree from a queue of characters and their counts.
     RETURNS: a Huffman tree based on the character counts in q
     EXAMPLES: 
-        huffmanTree' (BinoHeap [Node 0 1 (Leaf 's' 1) [],Node 1 1 (Leaf 'e' 1) [Node 0 2 (Leaf 't' 2) []]])
-        == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
+        huffmanTree' (PriorityQueue.insert (PriorityQueue.insert (PriorityQueue.insert PriorityQueue.empty (Leaf 'e' 1, 1)) (Leaf 's' 1, 1)) (Leaf 't' 2, 2))
+         == HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1))
         huffmanTree' PriorityQueue.empty == Void
 -}
 huffmanTree' :: PriorityQueue HuffmanTree -> HuffmanTree
--- VARIANT: The length of q
+-- VARIANT: length of q
 huffmanTree' q
     | PriorityQueue.is_empty q = Void
     | otherwise =
@@ -107,7 +107,7 @@ huffmanTree' q
     Turns a huffman tree into a code table
     RETURNS: a table that maps each character in h to its Huffman code
     EXAMPLES:
-        codeTable (Leaf 'a' 5) == T [('a',[])]
+        codeTable (Leaf 'a' 5) == T [('a',[True])]
         codeTable (HuffmanTree (Leaf 't' 2) 4 (HuffmanTree (Leaf 'e' 1) 2 (Leaf 's' 1)))
         == T [('s',[True,True]),('e',[True,False]),('t',[False])]
  -}
